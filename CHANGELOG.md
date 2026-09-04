@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.1] - 2026-09-04
+
+### Fixed
+
+- Re-publish via tokenless OIDC trusted publisher (initial 0.1.0 was manual).
+
 ## [0.1.0] - 2026-09-04
 
 ### Added
