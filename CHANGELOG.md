@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.3] - 2026-09-04
+
+### Fixed
+
+- README: corrected Pi section heading; added `pi install` command to Install.
+
 ## [0.1.2] - 2026-09-04
 
 ### Changed
