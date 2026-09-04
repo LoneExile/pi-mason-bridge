@@ -5,9 +5,9 @@ name: Release
 # run manually.
 #
 # Tokenless: authentication uses npm Trusted Publishing (OIDC) — no NPM_TOKEN.
-# One-time setup on npmjs.com: package "omp-mason-bridge" → Settings →
+# One-time setup on npmjs.com: package "pi-mason-bridge" → Settings →
 # Publishing access → add a GitHub Actions trusted publisher for
-# repo LoneExile/omp-mason-bridge, workflow ".github/workflows/release.yml".
+# repo LoneExile/pi-mason-bridge, workflow ".github/workflows/release.yml".
 # Provenance is generated automatically for trusted-publisher releases.
 
 on:

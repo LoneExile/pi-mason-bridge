@@ -1,4 +1,4 @@
-// omp-mason-bridge — expose Neovim Mason's language-server binaries to OMP.
+// pi-mason-bridge — expose Neovim Mason's language-server binaries to OMP.
 //
 // OMP ships built-in LSP definitions (gopls, pyright, rust-analyzer, …) but
 // only activates a server whose executable is discoverable. This extension

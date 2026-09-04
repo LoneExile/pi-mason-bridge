@@ -1,4 +1,4 @@
-# omp-mason-bridge
+# pi-mason-bridge
 
 Expose [Neovim Mason](https://github.com/mason-org/mason.nvim)'s language-server
 binaries to [Oh My Pi (OMP)](https://pi.dev) / Pi at startup.
@@ -12,10 +12,10 @@ them — no duplicate installs, no parallel catalog.
 
 ```bash
 # npm (after publishing)
-omp plugin install omp-mason-bridge
+omp plugin install pi-mason-bridge
 
 # or from source (pre-publish)
-omp plugin install github:LoneExile/omp-mason-bridge
+omp plugin install github:LoneExile/pi-mason-bridge
 ```
 
 Then start a **new** OMP session (extensions do not hot-reload).

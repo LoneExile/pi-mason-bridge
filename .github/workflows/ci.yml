@@ -37,9 +37,9 @@ jobs:
         run: |
           set -euo pipefail
           npm pack --silent
-          tar tzf omp-mason-bridge-*.tgz | tee /tmp/files.txt
+          tar tzf pi-mason-bridge-*.tgz | tee /tmp/files.txt
           grep -qx 'package/extensions/index.ts' /tmp/files.txt
           grep -qx 'package/package.json' /tmp/files.txt
           grep -qx 'package/README.md' /tmp/files.txt
           grep -qx 'package/LICENSE' /tmp/files.txt
-          rm -f omp-mason-bridge-*.tgz
+          rm -f pi-mason-bridge-*.tgz

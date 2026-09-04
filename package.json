@@ -1,5 +1,5 @@
 {
-  "name": "omp-mason-bridge",
+  "name": "pi-mason-bridge",
   "version": "0.1.0",
   "description": "Expose Neovim Mason's language-server binaries to Oh My Pi (OMP) — idempotent PATH bridge at startup.",
   "keywords": [
@@ -16,13 +16,13 @@
   "license": "MIT",
   "author": "LoneExile",
   "type": "module",
-  "homepage": "https://github.com/LoneExile/omp-mason-bridge#readme",
+  "homepage": "https://github.com/LoneExile/pi-mason-bridge#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LoneExile/omp-mason-bridge.git"
+    "url": "git+https://github.com/LoneExile/pi-mason-bridge.git"
   },
   "bugs": {
-    "url": "https://github.com/LoneExile/omp-mason-bridge/issues"
+    "url": "https://github.com/LoneExile/pi-mason-bridge/issues"
   },
   "pi": {
     "extensions": [
@@ -30,7 +30,7 @@
     ]
   },
   "omp": {
-    "name": "omp-mason-bridge",
+    "name": "pi-mason-bridge",
     "description": "Expose Neovim Mason's language-server binaries to OMP — idempotent PATH bridge at startup.",
     "extensions": [
       "./extensions"
