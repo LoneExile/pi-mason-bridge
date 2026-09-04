@@ -2,27 +2,52 @@
   "name": "omp-mason-bridge",
   "version": "0.1.0",
   "description": "Expose Neovim Mason's language-server binaries to Oh My Pi (OMP) — idempotent PATH bridge at startup.",
-  "keywords": ["pi-package", "pi", "omp", "oh-my-pi", "extension", "mason", "lsp", "language-server", "neovim"],
+  "keywords": [
+    "pi-package",
+    "pi",
+    "omp",
+    "oh-my-pi",
+    "extension",
+    "mason",
+    "lsp",
+    "language-server",
+    "neovim"
+  ],
   "license": "MIT",
   "author": "LoneExile",
   "type": "module",
   "homepage": "https://github.com/LoneExile/omp-mason-bridge#readme",
-  "repository": { "type": "git", "url": "git+https://github.com/LoneExile/omp-mason-bridge.git" },
-  "bugs": { "url": "https://github.com/LoneExile/omp-mason-bridge/issues" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LoneExile/omp-mason-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/LoneExile/omp-mason-bridge/issues"
+  },
   "pi": {
-    "extensions": ["./extensions"]
+    "extensions": [
+      "./extensions"
+    ]
   },
   "omp": {
     "name": "omp-mason-bridge",
     "description": "Expose Neovim Mason's language-server binaries to OMP — idempotent PATH bridge at startup.",
-    "extensions": ["./extensions"]
+    "extensions": [
+      "./extensions"
+    ]
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/bun": "^1.4.0",
     "@types/node": "^22.10.0",
     "typescript": "^5.6.0"
   },
-  "files": ["extensions", "README.md", "CHANGELOG.md", "LICENSE"]
+  "files": [
+    "extensions",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ]
 }

@@ -4,7 +4,7 @@
     "lib": ["ES2024"],
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "types": ["node"],
+    "types": ["node", "bun"],
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
