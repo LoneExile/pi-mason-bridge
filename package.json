@@ -1,6 +1,6 @@
 {
   "name": "pi-mason-bridge",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Expose Neovim Mason's language-server binaries to Oh My Pi (OMP) \u2014 idempotent PATH bridge at startup.",
   "keywords": [
     "pi-package",

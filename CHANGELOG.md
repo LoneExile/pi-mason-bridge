@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2] - 2026-09-04
+
+### Changed
+
+- Clarified Pi compatibility in README: installs and loads cleanly on Pi, but the LSP-bridge feature is OMP-only (Pi 0.84.4 has no LSP subsystem).
+- Aligned `pi` package manifest metadata with `omp`.
+
 ## [0.1.1] - 2026-09-04
 
 ### Fixed
