@@ -1,58 +1,34 @@
 # pi-mason-bridge
 
-Expose [Neovim Mason](https://github.com/mason-org/mason.nvim)'s language-server
-binaries to [Oh My Pi (OMP)](https://pi.dev) at startup.
+Lets OMP use the language servers you already installed via Neovim Mason.
 
-OMP ships built-in LSP definitions (gopls, pyright, rust-analyzer, yaml-language-server,
-marksman, …) but only activates a server when its executable is discoverable. If you
-already install language servers through Neovim Mason, this extension makes OMP find
-them — no duplicate installs, no parallel catalog.
+OMP only starts a language server when it can find the server's executable.
+This plugin adds Mason's bin folder to the search path, so OMP finds what's
+already there — no duplicate installs.
 
 ## Install
 
 ```bash
-# npm
 omp plugin install pi-mason-bridge
-
-# or from source
-omp plugin install github:LoneExile/pi-mason-bridge
-
-# Pi (loads cleanly; see "Pi compatibility" below — feature is OMP-only)
-pi install npm:pi-mason-bridge
 ```
 
-Then start a **new** OMP session (extensions do not hot-reload).
+Restart OMP (new session) after installing.
 
-## What it does
+## How it works
 
-At session load (before OMP resolves its LSP config), the extension:
+On startup, the plugin adds `~/.local/share/nvim/mason/bin` to `PATH` (once,
+idempotently; `$MASON/bin` if you set `$MASON`). If Mason isn't installed, it
+does nothing.
 
-1. Detects Mason's bin dir (`~/.local/share/nvim/mason/bin`, or `$MASON/bin` if set).
-2. Prepends it to `process.env.PATH` **once** (idempotent — no duplicates).
-3. Fails open: Mason absent → no-op.
+That's it. OMP's built-in server discovery does the rest — you get code
+intelligence in projects whose servers live in Mason. Servers still start
+lazily, only when needed.
 
-OMP's own built-in definitions then discover Mason's servers per project root
-markers and file types. Servers still start lazily (`lsp.lazy`). Nothing is
-installed; Mason/Neovim are untouched; no server is spawned or managed here.
+## Python: pick one checker
 
-Only Mason commands whose names match an OMP built-in are covered. Mason-only
-servers (e.g. vtsls, taplo, harper-ls-as-file-LSP) need explicit `lsp.json`
-definitions — out of scope for now.
-
-## Pi (upstream) compatibility
-
-This package **installs and loads cleanly on Pi** (`pi install npm:pi-mason-bridge`)
-— the extension factory runs without error and the PATH prepend is harmless.
-However, the feature it provides is **OMP-only**: Pi (as of 0.84.4) has no LSP
-tool or language-server discovery subsystem, so there is nothing for the Mason
-PATH bridge to feed on Pi. Installing it there is a no-op today; it will only
-become functional if Pi gains an LSP subsystem.
-
-## Python note: pyright vs basedpyright
-
-If a project pins its own Python checker (e.g. `basedpyright` in `.venv`), and Mason
-also provides `pyright`, OMP can discover both. To keep the project's own checker
-authoritative, add a project-local override (this file is outside the plugin):
+If a project has its own Python checker (e.g. `basedpyright` in `.venv`) and
+Mason also has `pyright`, OMP sees both. To keep the project's own checker,
+add this to the project:
 
 `.gitignore`:
 
@@ -71,6 +47,11 @@ authoritative, add a project-local override (this file is outside the plugin):
   }
 }
 ```
+
+## Pi
+
+Installs and loads cleanly (`pi install npm:pi-mason-bridge`), but does nothing
+useful there — Pi has no LSP tool, so there's nothing for it to feed. OMP-only.
 
 ## Develop
 
