@@ -1,7 +1,7 @@
 # pi-mason-bridge
 
 Expose [Neovim Mason](https://github.com/mason-org/mason.nvim)'s language-server
-binaries to [Oh My Pi (OMP)](https://pi.dev) / Pi at startup.
+binaries to [Oh My Pi (OMP)](https://pi.dev) at startup.
 
 OMP ships built-in LSP definitions (gopls, pyright, rust-analyzer, yaml-language-server,
 marksman, …) but only activates a server when its executable is discoverable. If you
@@ -11,10 +11,10 @@ them — no duplicate installs, no parallel catalog.
 ## Install
 
 ```bash
-# npm (after publishing)
+# npm
 omp plugin install pi-mason-bridge
 
-# or from source (pre-publish)
+# or from source
 omp plugin install github:LoneExile/pi-mason-bridge
 ```
 
@@ -35,6 +35,15 @@ installed; Mason/Neovim are untouched; no server is spawned or managed here.
 Only Mason commands whose names match an OMP built-in are covered. Mason-only
 servers (e.g. vtsls, taplo, harper-ls-as-file-LSP) need explicit `lsp.json`
 definitions — out of scope for now.
+
+## Pi (Pi) compatibility
+
+This package **installs and loads cleanly on Pi** (`pi install npm:pi-mason-bridge`)
+— the extension factory runs without error and the PATH prepend is harmless.
+However, the feature it provides is **OMP-only**: Pi (as of 0.84.4) has no LSP
+tool or language-server discovery subsystem, so there is nothing for the Mason
+PATH bridge to feed on Pi. Installing it there is a no-op today; it will only
+become functional if Pi gains an LSP subsystem.
 
 ## Python note: pyright vs basedpyright
 
