@@ -16,6 +16,9 @@ omp plugin install pi-mason-bridge
 
 # or from source
 omp plugin install github:LoneExile/pi-mason-bridge
+
+# Pi (loads cleanly; see "Pi compatibility" below — feature is OMP-only)
+pi install npm:pi-mason-bridge
 ```
 
 Then start a **new** OMP session (extensions do not hot-reload).
@@ -36,7 +39,7 @@ Only Mason commands whose names match an OMP built-in are covered. Mason-only
 servers (e.g. vtsls, taplo, harper-ls-as-file-LSP) need explicit `lsp.json`
 definitions — out of scope for now.
 
-## Pi (Pi) compatibility
+## Pi (upstream) compatibility
 
 This package **installs and loads cleanly on Pi** (`pi install npm:pi-mason-bridge`)
 — the extension factory runs without error and the PATH prepend is harmless.
