@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Status line output (`$PI_MASON_BRIDGE_STATUS`) redesigned: replaced the `mason:` text prefix with a plug icon, and dropped the "N available" count entirely. Now a pure presence indicator -- silent whenever nothing is running, never an inventory of what Mason has installed. Text is colored using the active OMP theme's `success` color, falling back to plain text if theming is unavailable.
+
+### Fixed
+
+- Running-server detection matched only each process's own short name (`ps -o comm=`), silently missing interpreter-launched servers (Node/Python-based language servers report as `node`/`python3`, not their script name) and symlinked binaries whose resolved target self-reports under a different name (observed: Mason's `marksman` resolves to a binary named `marksman-macos`). Now matches against the full command line instead.
+
 ## [0.2.0] - 2026-09-05
 
 ### Added

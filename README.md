@@ -26,22 +26,26 @@ lazily, only when needed.
 
 ## Status line (optional, off by default)
 
-Set `$PI_MASON_BRIDGE_STATUS` to have the bridge report in OMP's status line
-what it makes available — not what OMP has actually activated, since OMP
-exposes no API for that. A real Mason install commonly has 50+ entries
-(linters, formatters, debuggers — not only language servers), so entries are
-never listed by name unless they're actually running; everything else is
-summarized as a count, so the status line stays short and readable.
+Set `$PI_MASON_BRIDGE_STATUS` to show a small presence indicator (a plug
+icon, Nerd Font `\uf1e6`) in OMP's status line whenever a Mason-bridged
+binary is currently running -- never what OMP itself activated, since OMP
+exposes no API for that, and never an inventory of everything Mason has
+installed (a real Mason install commonly has 50+ entries -- linters,
+formatters, debuggers, not only language servers). Silent whenever nothing
+matches a running process.
 
-- `static` — check once per session, no process scan: `mason: 73 available`
-- `full` — same check, re-run after every turn, plus a lightweight process
-  scan (heuristic, not proof OMP started them — it misses non-Mason servers
-  like a project's own `.venv` `basedpyright`, and a same-named process
-  could be running for an unrelated reason) that names whichever are
-  currently running (capped at 6, then summarized): `mason: gopls,
-  pyright-langserver running · 73 available`
-- unset, or any other value — no status line entry at all (default; upgrading
-  this plugin never changes existing behavior unless you set this)
+- `static` -- check once per session, no ongoing cost: `[plug] gopls running`
+- `full` -- same check, re-run after every turn (a lightweight process scan;
+  heuristic, not proof OMP started them -- it misses non-Mason servers like
+  a project's own `.venv` `basedpyright`, and a same-named process could be
+  running for an unrelated reason). Multiple names are capped at 6, then
+  summarized: `[plug] gopls, pyright-langserver +3 more running`
+- unset, or any other value -- no status line entry at all (default;
+  upgrading this plugin never changes existing behavior unless you set this)
+
+The text is colored using your active OMP theme's `success` color (e.g.
+dark-gruvbox), not a hardcoded color -- falls back to plain text if theming
+is unavailable for any reason.
 
 ## Python: pick one checker
 

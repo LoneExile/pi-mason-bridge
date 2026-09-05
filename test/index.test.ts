@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   applyMasonPath,
+  applyThemeColor,
   currentlyRunningMasonServers,
   formatMasonStatus,
   listMasonServers,
@@ -137,6 +138,20 @@ describe("parseRunningCommands", () => {
   it("returns an empty set for empty input", () => {
     expect(parseRunningCommands("")).toEqual(new Set());
   });
+
+  it("extracts a script name from an interpreter-launched full command line (regression: Node-based LSP servers report as \"node\", not their script name)", () => {
+    const running = parseRunningCommands("node /home/u/.local/share/nvim/mason/bin/bash-language-server start\n");
+    expect(running.has("bash-language-server")).toBe(true);
+    expect(running.has("node")).toBe(true);
+  });
+
+  it("extracts a symlinked binary's invoked name even when it differs from the resolved target's own process name (regression: Mason's marksman -> marksman-macos)", () => {
+    // The OS still records the invoked path (the symlink name) as an argv
+    // token, even though the resolved binary reports its own comm as
+    // "marksman-macos" -- observed on a real Mason install.
+    const running = parseRunningCommands("/home/u/.local/share/nvim/mason/bin/marksman\n");
+    expect(running.has("marksman")).toBe(true);
+  });
 });
 
 describe("currentlyRunningMasonServers", () => {
@@ -151,35 +166,48 @@ describe("currentlyRunningMasonServers", () => {
 });
 
 describe("formatMasonStatus", () => {
-  it("returns undefined when there are no servers", () => {
-    expect(formatMasonStatus([], new Set())).toBeUndefined();
+  it("returns undefined when nothing is running (silent, not an inventory)", () => {
+    expect(formatMasonStatus(new Set())).toBeUndefined();
   });
 
-  it("summarizes as a count when nothing is running (never dumps every name)", () => {
-    expect(formatMasonStatus(["gopls", "pyright"], new Set())).toBe("mason: 2 available");
+  it("stays silent even for a large candidate set with nothing running (regression: 73-entry real Mason dir)", () => {
+    // formatMasonStatus only ever sees the running set, never the full candidate
+    // list, so a large Mason install with nothing active produces no output at all.
+    expect(formatMasonStatus(new Set())).toBeUndefined();
   });
 
-  it("stays short even for a large install with nothing running (regression: 73-entry real Mason dir)", () => {
-    const names = Array.from({ length: 73 }, (_, i) => `tool-${i}`);
-    const out = formatMasonStatus(names, new Set());
-    expect(out).toBe("mason: 73 available");
-    expect(out!.length).toBeLessThan(20);
+  it("shows a single running name with the LSP icon prefix", () => {
+    expect(formatMasonStatus(new Set(["gopls"]))).toBe("\uf1e6 gopls running");
   });
 
-  it("lists running names with a count of the rest", () => {
-    expect(formatMasonStatus(["gopls", "pyright"], new Set(["gopls"]))).toBe("mason: gopls running · 2 available");
-  });
-
-  it("lists multiple running names", () => {
-    expect(formatMasonStatus(["gopls", "pyright", "rust-analyzer"], new Set(["gopls", "pyright"]))).toBe(
-      "mason: gopls, pyright running · 3 available",
-    );
+  it("shows multiple running names, sorted", () => {
+    expect(formatMasonStatus(new Set(["pyright", "gopls"]))).toBe("\uf1e6 gopls, pyright running");
   });
 
   it("caps the running-name list and summarizes the overflow as a count", () => {
-    const names = ["a", "b", "c", "d", "e", "f", "g", "h"];
-    const running = new Set(names); // all 8 running, cap is 6
-    expect(formatMasonStatus(names, running)).toBe("mason: a, b, c, d, e, f +2 more running · 8 available");
+    const running = new Set(["a", "b", "c", "d", "e", "f", "g", "h"]); // 8 running, cap is 6
+    expect(formatMasonStatus(running)).toBe("\uf1e6 a, b, c, d, e, f +2 more running");
+  });
+});
+
+describe("applyThemeColor", () => {
+  it("wraps text using the provided theme", () => {
+    const fakeTheme = { fg: (color: string, text: string) => `<${color}>${text}</${color}>` };
+    expect(applyThemeColor(fakeTheme, "gopls running")).toBe("<success>gopls running</success>");
+  });
+
+  it("returns plain text when no theme is provided", () => {
+    expect(applyThemeColor(undefined, "gopls running")).toBe("gopls running");
+  });
+
+  it("falls back to plain text when theming throws (fail open, never throws itself)", () => {
+    const throwingTheme = {
+      fg: () => {
+        throw new Error("unknown theme color");
+      },
+    };
+    expect(() => applyThemeColor(throwingTheme, "gopls running")).not.toThrow();
+    expect(applyThemeColor(throwingTheme, "gopls running")).toBe("gopls running");
   });
 });
 

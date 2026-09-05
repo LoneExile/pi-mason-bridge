@@ -7,12 +7,12 @@
 // spawns or manages servers, never installs packages, and fails open when
 // Mason is absent.
 //
-// Optionally, opt in via $PI_MASON_BRIDGE_STATUS to report in the status
-// line what this bridge exposed — never what OMP actually activated, since
-// OMP has no API for that. "static" lists the server binaries Mason has
-// available; "full" additionally marks (best-effort) which of those are
-// currently running processes. Unset/unrecognized values are "off": no
-// behavior change on upgrade unless set explicitly.
+// Optionally, opt in via $PI_MASON_BRIDGE_STATUS to show a presence
+// indicator in the status line: which Mason-bridged binaries are currently
+// running (best-effort process check), never what OMP itself activated —
+// OMP has no API for that. Silent whenever nothing is running. "static"
+// checks once per session; "full" re-checks every turn. Unset/unrecognized
+// values are "off": no behavior change on upgrade unless set explicitly.
 //
 // Pure helpers are exported for unit testing (pi-output-styles convention).
 
@@ -83,14 +83,23 @@ export function listMasonServers(masonBin: string): string[] {
 }
 
 /**
- * Pure: parse `ps -A -o comm=`-style output (one command per line, bare
- * name or full path) into a set of basenames.
+ * Pure: parse `ps -A -o args=`-style output (one full command line per
+ * process, e.g. "node /path/to/bash-language-server start" for
+ * interpreter-launched servers, or "/opt/mason/bin/marksman" for native
+ * binaries) into the set of basenames of every whitespace-separated token
+ * across every line. Splitting the full command line -- not just the
+ * process's own short name -- is what still catches an interpreted
+ * script (whose own process name is just "node"/"python3") and a binary
+ * invoked through a differently-named symlink than its resolved target
+ * self-reports (observed: Mason's `marksman` symlink resolves to a
+ * binary whose own process name is `marksman-macos`).
  */
 export function parseRunningCommands(psOutput: string): Set<string> {
   const out = new Set<string>();
   for (const line of psOutput.split("\n")) {
-    const trimmed = line.trim();
-    if (trimmed) out.add(basename(trimmed));
+    for (const token of line.trim().split(/\s+/)) {
+      if (token) out.add(basename(token));
+    }
   }
   return out;
 }
@@ -101,14 +110,15 @@ const execAsync = promisify(exec);
  * Best-effort: which of `names` are currently running as processes. Empty
  * set on any failure, on Windows, or when `names` is empty. This is a
  * heuristic, not a guarantee of what OMP activated: it misses non-Mason
- * servers (e.g. a project's own .venv basedpyright), and a same-named
- * process could be running for an unrelated reason.
+ * servers (e.g. a project's own .venv basedpyright), and matching against
+ * full command lines (not just each process's own short name) means a
+ * same-named process -- or one that merely passes a tracked name as an
+ * argument -- could be running for an unrelated reason.
  */
-
 export async function currentlyRunningMasonServers(names: string[]): Promise<Set<string>> {
   if (names.length === 0 || process.platform === "win32") return new Set();
   try {
-    const { stdout } = await execAsync("ps -A -o comm=", { timeout: 2000 });
+    const { stdout } = await execAsync("ps -A -o args=", { timeout: 2000 });
     const running = parseRunningCommands(stdout);
     return new Set(names.filter((name) => running.has(name)));
   } catch {
@@ -116,38 +126,57 @@ export async function currentlyRunningMasonServers(names: string[]): Promise<Set
   }
 }
 
+/** Nerd Font "plug" glyph (nf-fa-plug) — conventional LSP/connection-status icon. */
+const LSP_ICON = "\uf1e6";
+
 /** Max running-server names listed before summarizing the rest as a count. */
 const MAX_LISTED_RUNNING = 6;
 
 /**
- * Pure: build the status line text. Undefined means "nothing to show" (no
- * servers found) — callers should clear any prior status with this value.
- * Deliberately bounded: `names` can be large (a real Mason install commonly
- * has 50+ entries covering linters/formatters/debuggers, not only language
- * servers — 73 on a typical dev machine), so entries are never listed by
- * name unless they are currently running, and even the running list is
- * capped. This avoids an unbounded string that overflows/truncates the
- * status line.
+ * Pure: build the status line text. Undefined means "nothing to show" —
+ * deliberately silent whenever nothing is currently running, not merely
+ * when Mason is absent. This is a presence indicator, not an inventory: it
+ * never reports how many binaries Mason has available, only what is
+ * actually running right now.
  */
-export function formatMasonStatus(names: string[], running: ReadonlySet<string>): string | undefined {
-  if (names.length === 0) return undefined;
-  const runningNames = names.filter((name) => running.has(name));
-  if (runningNames.length === 0) return `mason: ${names.length} available`;
-  const shown = runningNames.slice(0, MAX_LISTED_RUNNING).join(", ");
-  const overflow = runningNames.length - MAX_LISTED_RUNNING;
-  const runningText = overflow > 0 ? `${shown} +${overflow} more running` : `${shown} running`;
-  return `mason: ${runningText} · ${names.length} available`;
+export function formatMasonStatus(running: ReadonlySet<string>): string | undefined {
+  if (running.size === 0) return undefined;
+  const names = [...running].sort();
+  const shown = names.slice(0, MAX_LISTED_RUNNING).join(", ");
+  const overflow = names.length - MAX_LISTED_RUNNING;
+  const suffix = overflow > 0 ? ` +${overflow} more` : "";
+  return `${LSP_ICON} ${shown}${suffix} running`;
 }
 
+/** Minimal structural theme shape this file needs (matches OMP's real Theme.fg). */
+interface StatusTheme {
+  fg(color: string, text: string): string;
+}
 /** Minimal structural shape of the OMP/Pi extension hook API this file uses. */
 interface StatusUI {
   setStatus(key: string, text: string | undefined): void;
+  readonly theme: StatusTheme;
 }
 interface HookContext {
   ui: StatusUI;
 }
 interface ExtensionApi {
   on(event: "session_start" | "turn_end", handler: (event: unknown, ctx: HookContext) => void | Promise<void>): void;
+}
+
+/**
+ * Follow the user's OMP theme (e.g. dark-gruvbox) instead of a hardcoded
+ * color. Falls back to plain, unstyled `text` if `theme` is missing or
+ * theming throws for any reason (older host, unexpected color-name
+ * mismatch) -- never throws itself.
+ */
+export function applyThemeColor(theme: StatusTheme | undefined, text: string): string {
+  if (!theme) return text;
+  try {
+    return theme.fg("success", text);
+  } catch {
+    return text;
+  }
 }
 
 export function registerStatusHooks(pi: ExtensionApi | undefined, masonBin: string): void {
@@ -157,8 +186,9 @@ export function registerStatusHooks(pi: ExtensionApi | undefined, masonBin: stri
   const refresh = async (_event: unknown, ctx: HookContext): Promise<void> => {
     try {
       const names = listMasonServers(masonBin);
-      const running = mode === "full" ? await currentlyRunningMasonServers(names) : new Set<string>();
-      ctx.ui.setStatus("mason-bridge", formatMasonStatus(names, running));
+      const running = await currentlyRunningMasonServers(names);
+      const text = formatMasonStatus(running);
+      ctx.ui.setStatus("mason-bridge", text === undefined ? undefined : applyThemeColor(ctx.ui.theme, text));
     } catch {
       // Fail open: a status refresh must never break a turn.
     }
