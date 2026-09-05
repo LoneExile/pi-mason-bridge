@@ -28,23 +28,23 @@ lazily, only when needed.
 
 Set `$PI_MASON_BRIDGE_STATUS` to show a small presence indicator (a plug
 icon, Nerd Font `\uf1e6`) in OMP's status line whenever a Mason-bridged
-binary is currently running -- never what OMP itself activated, since OMP
+binary is currently running — never what OMP itself activated, since OMP
 exposes no API for that, and never an inventory of everything Mason has
-installed (a real Mason install commonly has 50+ entries -- linters,
+installed (a real Mason install commonly has 50+ entries — linters,
 formatters, debuggers, not only language servers). Silent whenever nothing
 matches a running process.
 
-- `static` -- check once per session, no ongoing cost: `[plug] gopls running`
-- `full` -- same check, re-run after every turn (a lightweight process scan;
-  heuristic, not proof OMP started them -- it misses non-Mason servers like
+- `static` — check once per session, no ongoing cost: `[plug] gopls running`
+- `full` — same check, re-run after every turn (a lightweight process scan;
+  heuristic, not proof OMP started them — it misses non-Mason servers like
   a project's own `.venv` `basedpyright`, and a same-named process could be
   running for an unrelated reason). Multiple names are capped at 6, then
   summarized: `[plug] gopls, pyright-langserver +3 more running`
-- unset, or any other value -- no status line entry at all (default;
+- unset, or any other value — no status line entry at all (default;
   upgrading this plugin never changes existing behavior unless you set this)
 
 The text is colored using your active OMP theme's `success` color (e.g.
-dark-gruvbox), not a hardcoded color -- falls back to plain text if theming
+dark-gruvbox), not a hardcoded color — falls back to plain text if theming
 is unavailable for any reason.
 
 ## Python: pick one checker

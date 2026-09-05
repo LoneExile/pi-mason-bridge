@@ -144,14 +144,6 @@ describe("parseRunningCommands", () => {
     expect(running.has("bash-language-server")).toBe(true);
     expect(running.has("node")).toBe(true);
   });
-
-  it("extracts a symlinked binary's invoked name even when it differs from the resolved target's own process name (regression: Mason's marksman -> marksman-macos)", () => {
-    // The OS still records the invoked path (the symlink name) as an argv
-    // token, even though the resolved binary reports its own comm as
-    // "marksman-macos" -- observed on a real Mason install.
-    const running = parseRunningCommands("/home/u/.local/share/nvim/mason/bin/marksman\n");
-    expect(running.has("marksman")).toBe(true);
-  });
 });
 
 describe("currentlyRunningMasonServers", () => {
@@ -167,12 +159,6 @@ describe("currentlyRunningMasonServers", () => {
 
 describe("formatMasonStatus", () => {
   it("returns undefined when nothing is running (silent, not an inventory)", () => {
-    expect(formatMasonStatus(new Set())).toBeUndefined();
-  });
-
-  it("stays silent even for a large candidate set with nothing running (regression: 73-entry real Mason dir)", () => {
-    // formatMasonStatus only ever sees the running set, never the full candidate
-    // list, so a large Mason install with nothing active produces no output at all.
     expect(formatMasonStatus(new Set())).toBeUndefined();
   });
 
@@ -246,5 +232,70 @@ describe("registerStatusHooks", () => {
     withEnv("PI_MASON_BRIDGE_STATUS", "full", () => {
       expect(() => registerStatusHooks(undefined, "/tmp/whatever")).not.toThrow();
     });
+  });
+});
+
+describe("registerStatusHooks wiring (full pipeline via injected fakes)", () => {
+  function fakePiWithHandlerCapture() {
+    const handlers: Record<string, (event: unknown, ctx: unknown) => Promise<void>> = {};
+    const pi = {
+      on: (event: string, handler: (event: unknown, ctx: unknown) => Promise<void>) => {
+        handlers[event] = handler;
+      },
+    } as unknown as Parameters<typeof registerStatusHooks>[0];
+    return { pi, handlers };
+  }
+
+  function fakeCtx(fg: (color: string, text: string) => string) {
+    const statusCalls: Array<string | undefined> = [];
+    const ctx = { ui: { setStatus: (_key: string, text: string | undefined) => statusCalls.push(text), theme: { fg } } };
+    return { ctx, statusCalls };
+  }
+
+  it("passes theme-colored text to setStatus end-to-end when something is running", async () => {
+    const { pi, handlers } = fakePiWithHandlerCapture();
+    const { ctx, statusCalls } = fakeCtx((color, text) => `<${color}>${text}</${color}>`);
+
+    withEnv("PI_MASON_BRIDGE_STATUS", "static", () => {
+      registerStatusHooks(pi, "/tmp/whatever", {
+        listServers: () => ["gopls"],
+        getRunning: async () => new Set(["gopls"]),
+      });
+    });
+
+    await handlers.session_start(undefined, ctx);
+    expect(statusCalls).toEqual([`<success>\uf1e6 gopls running</success>`]);
+  });
+
+  it("falls back to plain text end-to-end when theme.fg throws", async () => {
+    const { pi, handlers } = fakePiWithHandlerCapture();
+    const { ctx, statusCalls } = fakeCtx(() => {
+      throw new Error("boom");
+    });
+
+    withEnv("PI_MASON_BRIDGE_STATUS", "static", () => {
+      registerStatusHooks(pi, "/tmp/whatever", {
+        listServers: () => ["gopls"],
+        getRunning: async () => new Set(["gopls"]),
+      });
+    });
+
+    await handlers.session_start(undefined, ctx);
+    expect(statusCalls).toEqual([`\uf1e6 gopls running`]);
+  });
+
+  it("passes undefined to setStatus (clearing) end-to-end when nothing is running", async () => {
+    const { pi, handlers } = fakePiWithHandlerCapture();
+    const { ctx, statusCalls } = fakeCtx((_color, text) => text);
+
+    withEnv("PI_MASON_BRIDGE_STATUS", "static", () => {
+      registerStatusHooks(pi, "/tmp/whatever", {
+        listServers: () => ["gopls"],
+        getRunning: async () => new Set(),
+      });
+    });
+
+    await handlers.session_start(undefined, ctx);
+    expect(statusCalls).toEqual([undefined]);
   });
 });

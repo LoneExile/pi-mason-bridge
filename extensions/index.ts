@@ -179,14 +179,22 @@ export function applyThemeColor(theme: StatusTheme | undefined, text: string): s
   }
 }
 
-export function registerStatusHooks(pi: ExtensionApi | undefined, masonBin: string): void {
+export function registerStatusHooks(
+  pi: ExtensionApi | undefined,
+  masonBin: string,
+  deps: {
+    listServers?: (masonBin: string) => string[];
+    getRunning?: (names: string[]) => Promise<Set<string>>;
+  } = {},
+): void {
+  const { listServers = listMasonServers, getRunning = currentlyRunningMasonServers } = deps;
   const mode = resolveStatusMode(process.env.PI_MASON_BRIDGE_STATUS);
   if (mode === "off" || typeof pi?.on !== "function") return;
 
   const refresh = async (_event: unknown, ctx: HookContext): Promise<void> => {
     try {
-      const names = listMasonServers(masonBin);
-      const running = await currentlyRunningMasonServers(names);
+      const names = listServers(masonBin);
+      const running = await getRunning(names);
       const text = formatMasonStatus(running);
       ctx.ui.setStatus("mason-bridge", text === undefined ? undefined : applyThemeColor(ctx.ui.theme, text));
     } catch {
