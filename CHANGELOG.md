@@ -4,7 +4,7 @@
 
 ### Added
 
-- Optional status line reporting via `$PI_MASON_BRIDGE_STATUS` (`static` | `full`), off by default: lists Mason server binaries found, and in `full` mode marks which currently match a running process (best-effort).
+- Optional status line reporting via `$PI_MASON_BRIDGE_STATUS` (`static` | `full`), off by default: shows a count of available Mason binaries, and in `full` mode additionally names (capped, best-effort process check) which are currently running. Deliberately never dumps every binary by name — a real Mason install can have 50+ entries.
 
 ## [0.1.3] - 2026-09-04
 

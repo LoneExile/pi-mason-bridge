@@ -116,14 +116,27 @@ export async function currentlyRunningMasonServers(names: string[]): Promise<Set
   }
 }
 
+/** Max running-server names listed before summarizing the rest as a count. */
+const MAX_LISTED_RUNNING = 6;
+
 /**
  * Pure: build the status line text. Undefined means "nothing to show" (no
  * servers found) — callers should clear any prior status with this value.
+ * Deliberately bounded: `names` can be large (a real Mason install commonly
+ * has 50+ entries covering linters/formatters/debuggers, not only language
+ * servers — 73 on a typical dev machine), so entries are never listed by
+ * name unless they are currently running, and even the running list is
+ * capped. This avoids an unbounded string that overflows/truncates the
+ * status line.
  */
 export function formatMasonStatus(names: string[], running: ReadonlySet<string>): string | undefined {
   if (names.length === 0) return undefined;
-  const parts = names.map((name) => (running.has(name) ? `${name} \u25cf` : name));
-  return `mason: ${parts.join(", ")}`;
+  const runningNames = names.filter((name) => running.has(name));
+  if (runningNames.length === 0) return `mason: ${names.length} available`;
+  const shown = runningNames.slice(0, MAX_LISTED_RUNNING).join(", ");
+  const overflow = runningNames.length - MAX_LISTED_RUNNING;
+  const runningText = overflow > 0 ? `${shown} +${overflow} more running` : `${shown} running`;
+  return `mason: ${runningText} · ${names.length} available`;
 }
 
 /** Minimal structural shape of the OMP/Pi extension hook API this file uses. */

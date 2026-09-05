@@ -155,12 +155,31 @@ describe("formatMasonStatus", () => {
     expect(formatMasonStatus([], new Set())).toBeUndefined();
   });
 
-  it("lists names with no markers when none are running", () => {
-    expect(formatMasonStatus(["gopls", "pyright"], new Set())).toBe("mason: gopls, pyright");
+  it("summarizes as a count when nothing is running (never dumps every name)", () => {
+    expect(formatMasonStatus(["gopls", "pyright"], new Set())).toBe("mason: 2 available");
   });
 
-  it("marks only the running names", () => {
-    expect(formatMasonStatus(["gopls", "pyright"], new Set(["gopls"]))).toBe("mason: gopls ●, pyright");
+  it("stays short even for a large install with nothing running (regression: 73-entry real Mason dir)", () => {
+    const names = Array.from({ length: 73 }, (_, i) => `tool-${i}`);
+    const out = formatMasonStatus(names, new Set());
+    expect(out).toBe("mason: 73 available");
+    expect(out!.length).toBeLessThan(20);
+  });
+
+  it("lists running names with a count of the rest", () => {
+    expect(formatMasonStatus(["gopls", "pyright"], new Set(["gopls"]))).toBe("mason: gopls running · 2 available");
+  });
+
+  it("lists multiple running names", () => {
+    expect(formatMasonStatus(["gopls", "pyright", "rust-analyzer"], new Set(["gopls", "pyright"]))).toBe(
+      "mason: gopls, pyright running · 3 available",
+    );
+  });
+
+  it("caps the running-name list and summarizes the overflow as a count", () => {
+    const names = ["a", "b", "c", "d", "e", "f", "g", "h"];
+    const running = new Set(names); // all 8 running, cap is 6
+    expect(formatMasonStatus(names, running)).toBe("mason: a, b, c, d, e, f +2 more running · 8 available");
   });
 });
 
