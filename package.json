@@ -1,7 +1,7 @@
 {
   "name": "pi-mason-bridge",
-  "version": "0.1.3",
-  "description": "Expose Neovim Mason's language-server binaries to Oh My Pi (OMP) \u2014 idempotent PATH bridge at startup.",
+  "version": "0.2.0",
+  "description": "Expose Neovim Mason's language-server binaries to Oh My Pi (OMP) — idempotent PATH bridge at startup.",
   "keywords": [
     "pi-package",
     "pi",
@@ -26,14 +26,14 @@
   },
   "pi": {
     "name": "pi-mason-bridge",
-    "description": "Expose Neovim Mason's language-server binaries to OMP \u2014 idempotent PATH bridge at startup.",
+    "description": "Expose Neovim Mason's language-server binaries to OMP — idempotent PATH bridge at startup.",
     "extensions": [
       "./extensions"
     ]
   },
   "omp": {
     "name": "pi-mason-bridge",
-    "description": "Expose Neovim Mason's language-server binaries to OMP \u2014 idempotent PATH bridge at startup.",
+    "description": "Expose Neovim Mason's language-server binaries to OMP — idempotent PATH bridge at startup.",
     "extensions": [
       "./extensions"
     ]
