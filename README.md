@@ -24,6 +24,22 @@ That's it. OMP's built-in server discovery does the rest — you get code
 intelligence in projects whose servers live in Mason. Servers still start
 lazily, only when needed.
 
+## Status line (optional, off by default)
+
+Set `$PI_MASON_BRIDGE_STATUS` to have the bridge report in OMP's status line
+what it makes available — not what OMP has actually activated, since OMP
+exposes no API for that.
+
+- `static` — list the server binaries found in Mason's bin dir, checked once
+  per session: `mason: gopls, pyright-langserver, rust-analyzer`
+- `full` — same list, but re-checked after every turn, with a `●` on names
+  that currently match a running process (a heuristic, not proof OMP started
+  them — it misses non-Mason servers like a project's own `.venv`
+  `basedpyright`, and a same-named process could be running for an unrelated
+  reason): `mason: gopls ●, pyright-langserver, rust-analyzer`
+- unset, or any other value — no status line entry at all (default; upgrading
+  this plugin never changes existing behavior unless you set this)
+
 ## Python: pick one checker
 
 If a project has its own Python checker (e.g. `basedpyright` in `.venv`) and

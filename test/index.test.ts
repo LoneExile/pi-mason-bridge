@@ -1,5 +1,17 @@
 import { describe, expect, it } from "bun:test";
-import { applyMasonPath, prependMasonToPath } from "../extensions/index";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import {
+  applyMasonPath,
+  currentlyRunningMasonServers,
+  formatMasonStatus,
+  listMasonServers,
+  parseRunningCommands,
+  prependMasonToPath,
+  registerStatusHooks,
+  resolveStatusMode,
+} from "../extensions/index";
 
 const MASON = "/home/u/.local/share/nvim/mason/bin";
 
@@ -49,5 +61,143 @@ describe("applyMasonPath", () => {
       process.env.PATH = original;
       delete process.env.MASON;
     }
+  });
+});
+
+/** Run `fn` with `process.env[name]` set to `value` (or deleted, if undefined), then restore it. */
+function withEnv(name: string, value: string | undefined, fn: () => void): void {
+  const original = process.env[name];
+  try {
+    if (value === undefined) delete process.env[name];
+    else process.env[name] = value;
+    fn();
+  } finally {
+    if (original === undefined) delete process.env[name];
+    else process.env[name] = original;
+  }
+}
+
+describe("resolveStatusMode", () => {
+  it("defaults to off when unset", () => {
+    expect(resolveStatusMode(undefined)).toBe("off");
+  });
+
+  it("defaults to off for an empty string", () => {
+    expect(resolveStatusMode("")).toBe("off");
+  });
+
+  it("defaults to off for an unrecognized value", () => {
+    expect(resolveStatusMode("verbose")).toBe("off");
+  });
+
+  it("recognizes static", () => {
+    expect(resolveStatusMode("static")).toBe("static");
+  });
+
+  it("recognizes full", () => {
+    expect(resolveStatusMode("full")).toBe("full");
+  });
+
+  it("is case-insensitive and trims whitespace", () => {
+    expect(resolveStatusMode("  FULL  ")).toBe("full");
+  });
+});
+
+describe("listMasonServers", () => {
+  it("returns sorted binary names from a real directory", () => {
+    const dir = mkdtempSync(join(tmpdir(), "mason-bridge-test-"));
+    try {
+      writeFileSync(join(dir, "rust-analyzer"), "");
+      writeFileSync(join(dir, "gopls"), "");
+      writeFileSync(join(dir, "pyright-langserver"), "");
+      expect(listMasonServers(dir)).toEqual(["gopls", "pyright-langserver", "rust-analyzer"]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("returns an empty array for a nonexistent directory", () => {
+    expect(listMasonServers("/nonexistent/mason/bin/for-real")).toEqual([]);
+  });
+});
+
+describe("parseRunningCommands", () => {
+  it("parses bare names, one per line", () => {
+    expect(parseRunningCommands("bash\ngopls\n")).toEqual(new Set(["bash", "gopls"]));
+  });
+
+  it("reduces full paths to basenames", () => {
+    expect(parseRunningCommands("/usr/local/bin/gopls\n")).toEqual(new Set(["gopls"]));
+  });
+
+  it("ignores blank lines", () => {
+    expect(parseRunningCommands("gopls\n\n  \nrust-analyzer\n")).toEqual(new Set(["gopls", "rust-analyzer"]));
+  });
+
+  it("returns an empty set for empty input", () => {
+    expect(parseRunningCommands("")).toEqual(new Set());
+  });
+});
+
+describe("currentlyRunningMasonServers", () => {
+  it("returns an empty set for an empty names list", async () => {
+    expect(await currentlyRunningMasonServers([])).toEqual(new Set());
+  });
+
+  it("resolves without throwing for a name that is not a running process", async () => {
+    const result = await currentlyRunningMasonServers(["definitely-not-a-real-process-xyz"]);
+    expect(result).toEqual(new Set());
+  });
+});
+
+describe("formatMasonStatus", () => {
+  it("returns undefined when there are no servers", () => {
+    expect(formatMasonStatus([], new Set())).toBeUndefined();
+  });
+
+  it("lists names with no markers when none are running", () => {
+    expect(formatMasonStatus(["gopls", "pyright"], new Set())).toBe("mason: gopls, pyright");
+  });
+
+  it("marks only the running names", () => {
+    expect(formatMasonStatus(["gopls", "pyright"], new Set(["gopls"]))).toBe("mason: gopls ●, pyright");
+  });
+});
+
+describe("registerStatusHooks", () => {
+  function fakePi() {
+    const registered: string[] = [];
+    const pi = { on: (event: string) => registered.push(event) } as unknown as Parameters<typeof registerStatusHooks>[0];
+    return { pi, registered };
+  }
+
+  it("registers nothing when the mode is off (default, unset env)", () => {
+    const { pi, registered } = fakePi();
+    withEnv("PI_MASON_BRIDGE_STATUS", undefined, () => {
+      registerStatusHooks(pi, "/tmp/whatever");
+      expect(registered).toEqual([]);
+    });
+  });
+
+  it("registers only session_start in static mode", () => {
+    const { pi, registered } = fakePi();
+    withEnv("PI_MASON_BRIDGE_STATUS", "static", () => {
+      registerStatusHooks(pi, "/tmp/whatever");
+      expect(registered).toEqual(["session_start"]);
+    });
+  });
+
+  it("registers session_start and turn_end in full mode", () => {
+    const { pi, registered } = fakePi();
+    withEnv("PI_MASON_BRIDGE_STATUS", "full", () => {
+      registerStatusHooks(pi, "/tmp/whatever");
+      expect(registered).toEqual(["session_start", "turn_end"]);
+    });
+  });
+
+  it("registers nothing when pi is undefined", () => {
+    withEnv("PI_MASON_BRIDGE_STATUS", "full", () => {
+      expect(() => registerStatusHooks(undefined, "/tmp/whatever")).not.toThrow();
+    });
   });
 });

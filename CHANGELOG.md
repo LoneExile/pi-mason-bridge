@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Optional status line reporting via `$PI_MASON_BRIDGE_STATUS` (`static` | `full`), off by default: lists Mason server binaries found, and in `full` mode marks which currently match a running process (best-effort).
+
 ## [0.1.3] - 2026-09-04
 
 ### Fixed
