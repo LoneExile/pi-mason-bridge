@@ -29,14 +29,18 @@
     "description": "Expose Neovim Mason's language-server binaries to OMP — idempotent PATH bridge at startup.",
     "extensions": [
       "./extensions"
-    ]
+    ],
+    "image": "https://github.com/LoneExile/pi-mason-bridge/raw/main/assets/demo.gif",
+    "video": "https://github.com/LoneExile/pi-mason-bridge/raw/main/assets/demo.mp4"
   },
   "omp": {
     "name": "pi-mason-bridge",
     "description": "Expose Neovim Mason's language-server binaries to OMP — idempotent PATH bridge at startup.",
     "extensions": [
       "./extensions"
-    ]
+    ],
+    "image": "https://github.com/LoneExile/pi-mason-bridge/raw/main/assets/demo.gif",
+    "video": "https://github.com/LoneExile/pi-mason-bridge/raw/main/assets/demo.mp4"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

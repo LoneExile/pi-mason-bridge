@@ -1,0 +1,5 @@
+# pi-mason-bridge: real Mason language servers already running (from your
+# editor) show up in OMP's status line once the bridge is active.
+type PI_MASON_BRIDGE_STATUS=full omp --no-session --no-title
+key Enter
+sleep 4

@@ -6,6 +6,8 @@ OMP only starts a language server when it can find the server's executable.
 This plugin adds Mason's bin folder to the search path, so OMP finds what's
 already there — no duplicate installs.
 
+![status line demo](https://github.com/LoneExile/pi-mason-bridge/raw/main/assets/demo.gif)
+
 ## Install
 
 ```bash
@@ -43,9 +45,10 @@ matches a running process.
 - unset, or any other value — no status line entry at all (default;
   upgrading this plugin never changes existing behavior unless you set this)
 
-The text is colored using your active OMP theme's `success` color (e.g.
-dark-gruvbox), not a hardcoded color — falls back to plain text if theming
-is unavailable for any reason.
+The plugin attempts to color this text using your active OMP theme's
+`success` color, but as of OMP 18.1.10 the hook-status line strips ANSI
+styling before display (`sanitizeStatusText`), so it currently always
+renders as plain text regardless of theme.
 
 ## Python: pick one checker
 

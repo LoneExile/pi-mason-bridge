@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Demo GIF/MP4 and `pi.image`/`omp.image`/`pi.video`/`omp.video` manifest fields for the pi.dev/npm package gallery.
+
+### Fixed
+
+- Corrected the README's claim that status-line text renders in the OMP theme's `success` color — as of OMP 18.1.10 the hook-status line strips ANSI styling before display (`sanitizeStatusText`), so it currently always renders as plain text.
+
 ## [0.2.1] - 2026-09-05
 
 ### Changed
