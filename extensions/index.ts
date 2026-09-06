@@ -148,35 +148,15 @@ export function formatMasonStatus(running: ReadonlySet<string>): string | undefi
   return `${LSP_ICON} ${shown}${suffix} running`;
 }
 
-/** Minimal structural theme shape this file needs (matches OMP's real Theme.fg). */
-interface StatusTheme {
-  fg(color: string, text: string): string;
-}
 /** Minimal structural shape of the OMP/Pi extension hook API this file uses. */
 interface StatusUI {
   setStatus(key: string, text: string | undefined): void;
-  readonly theme: StatusTheme;
 }
 interface HookContext {
   ui: StatusUI;
 }
 interface ExtensionApi {
   on(event: "session_start" | "turn_end", handler: (event: unknown, ctx: HookContext) => void | Promise<void>): void;
-}
-
-/**
- * Follow the user's OMP theme (e.g. dark-gruvbox) instead of a hardcoded
- * color. Falls back to plain, unstyled `text` if `theme` is missing or
- * theming throws for any reason (older host, unexpected color-name
- * mismatch) -- never throws itself.
- */
-export function applyThemeColor(theme: StatusTheme | undefined, text: string): string {
-  if (!theme) return text;
-  try {
-    return theme.fg("success", text);
-  } catch {
-    return text;
-  }
 }
 
 export function registerStatusHooks(
@@ -196,7 +176,7 @@ export function registerStatusHooks(
       const names = listServers(masonBin);
       const running = await getRunning(names);
       const text = formatMasonStatus(running);
-      ctx.ui.setStatus("mason-bridge", text === undefined ? undefined : applyThemeColor(ctx.ui.theme, text));
+      ctx.ui.setStatus("mason-bridge", text);
     } catch {
       // Fail open: a status refresh must never break a turn.
     }

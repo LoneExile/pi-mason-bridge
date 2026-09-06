@@ -6,9 +6,9 @@
 
 - Demo GIF/MP4 and `pi.image`/`omp.image`/`pi.video`/`omp.video` manifest fields for the pi.dev/npm package gallery.
 
-### Fixed
+### Removed
 
-- Corrected the README's claim that status-line text renders in the OMP theme's `success` color — as of OMP 18.1.10 the hook-status line strips ANSI styling before display (`sanitizeStatusText`), so it currently always renders as plain text.
+- `applyThemeColor` and the status line's theme-color attempt. Confirmed via raw asciicast byte inspection that OMP 18.1.10's hook-status render path calls `sanitizeStatusText()`, which unconditionally strips all ANSI/VT escape sequences from the stored text before display — `theme.fg()`'s output never survived to the terminal on this path, regardless of OMP version, `NO_COLOR`, or theme. The status line has always rendered as plain text in practice; this removes the dead code that never had any visible effect.
 
 ## [0.2.1] - 2026-09-05
 

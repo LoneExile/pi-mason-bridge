@@ -45,11 +45,6 @@ matches a running process.
 - unset, or any other value — no status line entry at all (default;
   upgrading this plugin never changes existing behavior unless you set this)
 
-The plugin attempts to color this text using your active OMP theme's
-`success` color, but as of OMP 18.1.10 the hook-status line strips ANSI
-styling before display (`sanitizeStatusText`), so it currently always
-renders as plain text regardless of theme.
-
 ## Python: pick one checker
 
 If a project has its own Python checker (e.g. `basedpyright` in `.venv`) and
