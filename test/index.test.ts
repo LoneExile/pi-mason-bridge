@@ -4,7 +4,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   applyMasonPath,
-  applyThemeColor,
   currentlyRunningMasonServers,
   formatMasonStatus,
   listMasonServers,
@@ -176,27 +175,6 @@ describe("formatMasonStatus", () => {
   });
 });
 
-describe("applyThemeColor", () => {
-  it("wraps text using the provided theme", () => {
-    const fakeTheme = { fg: (color: string, text: string) => `<${color}>${text}</${color}>` };
-    expect(applyThemeColor(fakeTheme, "gopls running")).toBe("<success>gopls running</success>");
-  });
-
-  it("returns plain text when no theme is provided", () => {
-    expect(applyThemeColor(undefined, "gopls running")).toBe("gopls running");
-  });
-
-  it("falls back to plain text when theming throws (fail open, never throws itself)", () => {
-    const throwingTheme = {
-      fg: () => {
-        throw new Error("unknown theme color");
-      },
-    };
-    expect(() => applyThemeColor(throwingTheme, "gopls running")).not.toThrow();
-    expect(applyThemeColor(throwingTheme, "gopls running")).toBe("gopls running");
-  });
-});
-
 describe("registerStatusHooks", () => {
   function fakePi() {
     const registered: string[] = [];
@@ -246,32 +224,15 @@ describe("registerStatusHooks wiring (full pipeline via injected fakes)", () => 
     return { pi, handlers };
   }
 
-  function fakeCtx(fg: (color: string, text: string) => string) {
+  function fakeCtx() {
     const statusCalls: Array<string | undefined> = [];
-    const ctx = { ui: { setStatus: (_key: string, text: string | undefined) => statusCalls.push(text), theme: { fg } } };
+    const ctx = { ui: { setStatus: (_key: string, text: string | undefined) => statusCalls.push(text) } };
     return { ctx, statusCalls };
   }
 
-  it("passes theme-colored text to setStatus end-to-end when something is running", async () => {
+  it("passes formatted text to setStatus end-to-end when something is running", async () => {
     const { pi, handlers } = fakePiWithHandlerCapture();
-    const { ctx, statusCalls } = fakeCtx((color, text) => `<${color}>${text}</${color}>`);
-
-    withEnv("PI_MASON_BRIDGE_STATUS", "static", () => {
-      registerStatusHooks(pi, "/tmp/whatever", {
-        listServers: () => ["gopls"],
-        getRunning: async () => new Set(["gopls"]),
-      });
-    });
-
-    await handlers.session_start(undefined, ctx);
-    expect(statusCalls).toEqual([`<success>\uf1e6 gopls running</success>`]);
-  });
-
-  it("falls back to plain text end-to-end when theme.fg throws", async () => {
-    const { pi, handlers } = fakePiWithHandlerCapture();
-    const { ctx, statusCalls } = fakeCtx(() => {
-      throw new Error("boom");
-    });
+    const { ctx, statusCalls } = fakeCtx();
 
     withEnv("PI_MASON_BRIDGE_STATUS", "static", () => {
       registerStatusHooks(pi, "/tmp/whatever", {
@@ -286,7 +247,7 @@ describe("registerStatusHooks wiring (full pipeline via injected fakes)", () => 
 
   it("passes undefined to setStatus (clearing) end-to-end when nothing is running", async () => {
     const { pi, handlers } = fakePiWithHandlerCapture();
-    const { ctx, statusCalls } = fakeCtx((_color, text) => text);
+    const { ctx, statusCalls } = fakeCtx();
 
     withEnv("PI_MASON_BRIDGE_STATUS", "static", () => {
       registerStatusHooks(pi, "/tmp/whatever", {
